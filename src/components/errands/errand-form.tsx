@@ -73,7 +73,7 @@ export function ErrandForm({ initialData, onSubmit, onCancel, submitLabel, loadi
 
         <div className="space-y-2">
           <Label>Category *</Label>
-          <Select value={category} onValueChange={setCategory}>
+          <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -89,7 +89,7 @@ export function ErrandForm({ initialData, onSubmit, onCancel, submitLabel, loadi
 
         <div className="space-y-2">
           <Label>Interval Type *</Label>
-          <RadioGroup value={intervalType} onValueChange={setIntervalType} className="flex gap-4 pt-2">
+          <RadioGroup value={intervalType} onValueChange={(v) => setIntervalType(v as typeof intervalType)} className="flex gap-4 pt-2">
             <div className="flex items-center gap-2">
               <RadioGroupItem value="months" id="months" />
               <Label htmlFor="months" className="font-normal cursor-pointer">Months</Label>

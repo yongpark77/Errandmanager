@@ -16,7 +16,7 @@ import { useAllCompletionHistory } from '@/hooks/use-completion-history'
 import { useAnalyticsData } from '@/hooks/use-analytics'
 import { calculateErrandStatus, getGreeting, formatCurrency, getIntervalLabel, getCompletionStatus } from '@/lib/errand-utils'
 import { formatDate } from '@/lib/date-utils'
-import { CATEGORIES, getCategoryConfig } from '@/lib/constants'
+import { CATEGORIES } from '@/lib/constants'
 import { AlertTriangle, Clock, CheckCircle, ArrowRight, Lightbulb, TrendingUp } from 'lucide-react'
 import type { Errand, ErrandWithStatus, CompletionHistory } from '@/types/errand'
 

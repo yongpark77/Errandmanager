@@ -302,7 +302,6 @@ function CalendarView({
   onComplete: (e: Errand) => void
 }) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const navigate = useNavigate()
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)

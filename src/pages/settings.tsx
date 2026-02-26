@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useErrands } from '@/hooks/use-errands'
 import { useUpdateProfile } from '@/hooks/use-profile'
 import { exportErrandsToCSV } from '@/lib/export-csv'
-import { supabase } from '@/lib/supabase'
+import { deleteAllErrands } from '@/api/errands'
 import { User, Bell, Database, Info, LogOut, Download, Trash2, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -50,17 +50,15 @@ export default function SettingsPage() {
   const handleClearAll = async () => {
     if (!user) return
     setClearing(true)
-    const { error } = await supabase
-      .from('errands')
-      .delete()
-      .eq('user_id', user.id)
-    setClearing(false)
-    if (error) {
-      toast.error(error.message)
-    } else {
+    try {
+      await deleteAllErrands(user.id)
       toast.success('All errands cleared')
       setShowClearAll(false)
       window.location.reload()
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -151,7 +149,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Storage</p>
-              <p className="text-sm text-muted-foreground">Supabase Cloud</p>
+              <p className="text-sm text-muted-foreground">Firebase Cloud</p>
             </div>
           </div>
           <Separator />

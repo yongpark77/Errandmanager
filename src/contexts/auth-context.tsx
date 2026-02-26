@@ -1,12 +1,24 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
-import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile as updateFirebaseProfile,
+  signOut as firebaseSignOut,
+} from 'firebase/auth'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { auth, db, isMock } from '@/lib/firebase'
+import { mockAuth, mockDb } from '@/lib/mock-data'
 import type { Profile } from '@/types/errand'
 
+interface AppUser {
+  id: string
+  email: string | null
+}
+
 interface AuthContextType {
-  user: User | null
+  user: AppUser | null
   profile: Profile | null
-  session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>
@@ -17,18 +29,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AppUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    setProfile(data)
+    if (isMock) {
+      const p = mockDb.getOne<Profile>('profiles', userId)
+      setProfile(p)
+      return
+    }
+    const snap = await getDoc(doc(db!, 'profiles', userId))
+    if (snap.exists()) {
+      setProfile({ id: snap.id, ...snap.data() } as Profile)
+    }
   }, [])
 
   const refreshProfile = useCallback(async () => {
@@ -38,49 +52,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchProfile])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
+    if (isMock) {
+      const unsubscribe = mockAuth.onAuthStateChanged((mockUser) => {
+        if (mockUser) {
+          setUser({ id: mockUser.id, email: mockUser.email })
+          fetchProfile(mockUser.id)
+        } else {
+          setUser(null)
+          setProfile(null)
+        }
+        setLoading(false)
+      })
+      return unsubscribe
+    }
+
+    const unsubscribe = onAuthStateChanged(auth!, (firebaseUser) => {
+      if (firebaseUser) {
+        const appUser: AppUser = { id: firebaseUser.uid, email: firebaseUser.email }
+        setUser(appUser)
+        fetchProfile(firebaseUser.uid)
+      } else {
+        setUser(null)
+        setProfile(null)
       }
       setLoading(false)
     })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      } else {
-        setProfile(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    return unsubscribe
   }, [fetchProfile])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error as Error | null }
+    try {
+      if (isMock) {
+        await mockAuth.signIn(email, password)
+        return { error: null }
+      }
+      await signInWithEmailAndPassword(auth!, email, password)
+      return { error: null }
+    } catch (e) {
+      return { error: e as Error }
+    }
   }
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    })
-    return { error: error as Error | null }
+    try {
+      if (isMock) {
+        await mockAuth.signUp(email, password, name)
+        return { error: null }
+      }
+      const cred = await createUserWithEmailAndPassword(auth!, email, password)
+      await updateFirebaseProfile(cred.user, { displayName: name })
+      const now = new Date().toISOString()
+      await setDoc(doc(db!, 'profiles', cred.user.uid), {
+        name,
+        remind_days_before: 3,
+        created_at: now,
+        updated_at: now,
+      })
+      return { error: null }
+    } catch (e) {
+      return { error: e as Error }
+    }
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+  const handleSignOut = async () => {
+    if (isMock) {
+      await mockAuth.signOut()
+    } else {
+      await firebaseSignOut(auth!)
+    }
     setProfile(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut: handleSignOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

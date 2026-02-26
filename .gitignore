@@ -31,5 +31,9 @@ dist-ssr
 # Playwright MCP
 .playwright-mcp
 
+# Firebase
+service-account.json
+.env
+
 # Claude
 .claude
