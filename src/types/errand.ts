@@ -1,14 +1,53 @@
-import type { Database } from './supabase'
+export interface Profile {
+  id: string
+  name: string
+  remind_days_before: number
+  created_at: string
+  updated_at: string
+}
 
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
+export type ProfileUpdate = Partial<Omit<Profile, 'id' | 'created_at'>>
 
-export type Errand = Database['public']['Tables']['errands']['Row']
-export type ErrandInsert = Database['public']['Tables']['errands']['Insert']
-export type ErrandUpdate = Database['public']['Tables']['errands']['Update']
+export interface Errand {
+  id: string
+  user_id: string
+  name: string
+  description: string | null
+  category: 'vehicle' | 'home' | 'subscriptions' | 'health' | 'other'
+  interval_type: 'months' | 'miles'
+  interval_value: number
+  next_due: string
+  last_completed: string | null
+  estimated_cost: number
+  reminders: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
 
-export type CompletionHistory = Database['public']['Tables']['completion_history']['Row']
-export type CompletionHistoryInsert = Database['public']['Tables']['completion_history']['Insert']
+export type ErrandInsert = Omit<Errand, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type ErrandUpdate = Partial<Omit<Errand, 'id' | 'created_at'>>
+
+export interface CompletionHistory {
+  id: string
+  errand_id: string
+  user_id: string
+  completed_date: string
+  scheduled_date: string
+  cost: number
+  notes: string | null
+  created_at: string
+}
+
+export type CompletionHistoryInsert = Omit<CompletionHistory, 'id' | 'created_at'> & {
+  id?: string
+  created_at?: string
+}
 
 export type ErrandCategory = Errand['category']
 export type IntervalType = Errand['interval_type']

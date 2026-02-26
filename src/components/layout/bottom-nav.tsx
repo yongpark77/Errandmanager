@@ -3,11 +3,11 @@ import { Home, ClipboardList, PlusCircle, BarChart3, Settings } from 'lucide-rea
 import { cn } from '@/lib/utils'
 
 const BOTTOM_TABS = [
-  { label: 'Home', icon: Home, path: '/' },
-  { label: 'Errands', icon: ClipboardList, path: '/errands' },
+  { label: 'Home', icon: Home, path: '/', isFab: false },
+  { label: 'Errands', icon: ClipboardList, path: '/errands', isFab: false },
   { label: 'Add', icon: PlusCircle, path: '/add', isFab: true },
-  { label: 'Analytics', icon: BarChart3, path: '/analytics' },
-  { label: 'Settings', icon: Settings, path: '/settings' },
+  { label: 'Analytics', icon: BarChart3, path: '/analytics', isFab: false },
+  { label: 'Settings', icon: Settings, path: '/settings', isFab: false },
 ] as const
 
 export function BottomNav() {

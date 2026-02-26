@@ -48,7 +48,7 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
             </Pie>
             <ChartTooltip content={<ChartTooltipContent />} />
             <Legend
-              formatter={(value: string, entry: unknown) => {
+              formatter={(value: string, _entry: unknown) => {
                 const item = data.find((d) => d.name === value)
                 return `${value} ${item ? formatCurrency(item.value) : ''}`
               }}
